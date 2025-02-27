@@ -6,7 +6,7 @@ use crate::identity::Signer;
 use crate::identity::Signers;
 use anyhow::Result;
 use async_trait::async_trait;
-use base64::{encode, decode};
+use base64::{decode, encode};
 use chrono::Utc;
 use reqwest::{Client, Error};
 use serde::Deserialize;
@@ -140,7 +140,8 @@ impl ClientWrapper {
         let encoded_challenge = encode(challenge_bytes);
         let encoded_signature = encode(signature);
 
-        let response = self.client
+        let response = self
+            .client
             .patch(format!("{}/v1/accounts/{}", self.registrar_url, twin_id))
             .header(
                 "X-Auth",
@@ -171,14 +172,16 @@ impl ClientWrapper {
         })?;
 
         let ss58_address = decode(twin.public_key.clone())?;
-        let sized_ss58_address: [u8; 32] = ss58_address.try_into().expect("Failed to convert Vec<u8> to [u8; 32]");
+        let sized_ss58_address: [u8; 32] = ss58_address
+            .try_into()
+            .expect("Failed to convert Vec<u8> to [u8; 32]");
         let account_id = AccountId32::new(sized_ss58_address);
 
-        Ok(Some(Twin { 
-            id: twin.twin_id, 
-		    account: account_id,
-            relay: twin.relays, 
-            pk: Some(decode(twin.public_key)?)
+        Ok(Some(Twin {
+            id: twin.twin_id,
+            account: account_id,
+            relay: twin.relays,
+            pk: Some(decode(twin.public_key)?),
         }))
     }
 
@@ -204,7 +207,6 @@ impl ClientWrapper {
     }
 }
 
-
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 pub struct RegistrarTwin {
     pub twin_id: u32,
@@ -215,10 +217,13 @@ pub struct RegistrarTwin {
 #[cfg(test)]
 mod tests {
 
-    use crate::{cache::{MemCache, NoCache}, identity};
+    use crate::{
+        cache::{MemCache, NoCache},
+        identity,
+    };
 
     use super::*;
-    use anyhow::Context  ;
+    use anyhow::Context;
 
     #[tokio::test]
     async fn test_get_twin_with_mem_cache() {
@@ -326,11 +331,9 @@ mod tests {
         let mut relays = Vec::new();
         relays.push("relay.gent02.dev.grid.tf".to_string());
 
-        db
-            .update_twin(&kp, RelayDomains::new(&relays), Some(&pk), 15)
+        db.update_twin(&kp, RelayDomains::new(&relays), Some(&pk), 15)
             .await
             .context("can't update twin from registrar")
             .unwrap();
-
     }
 }

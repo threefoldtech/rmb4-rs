@@ -96,7 +96,7 @@ mod tests {
     use super::*;
 
     const PRIVATE_KEY: &str = "56ad3b7b0925fbb9b6d43f8db2a9b199b28c4c8cfdbbf8ecbfb5f20dfd09009e15f85563edc6e9b456b31e7d7cf720c7d3d897cc54ef61c28f3a0d52de9296b1";
-   
+
     #[test]
     fn test_load_from_private_key() {
         Ed25519Signer::try_from(PRIVATE_KEY).expect("key must be loaded");
