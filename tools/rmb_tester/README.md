@@ -90,10 +90,10 @@ python3 ./msg_handler.py -h
 ./install.sh
 ```
 
-you can start testing live nodes if it is reachable over rmb by running `test-live-nodes.sh` script. it takes only one argument, the network name (one of `dev`, `qa`, `test`, `main`) and required to pass set you mnemonic as env var `MNEMONIC`. for testing dev network nodes:
+you can start testing live nodes if it is reachable over rmb by running `test-live-nodes.sh` script. it takes only one argument, the network name (one of `dev`, `qa`, `test`, `main`) and required to pass set you private key as env var `PRIVATE_KEY`. for testing dev network nodes:
 
 ```sh
-MNEMONIC="[YOUR MNEMONIC]" ./test_live_nodes.sh dev
+PRIVATE_KEY="[YOUR PRIVATE_KEY]" ./test_live_nodes.sh dev
 ```
 
 optionally, set `TIMEOUT` and/or `RMB_BIN`.
@@ -103,7 +103,7 @@ optionally, set `TIMEOUT` and/or `RMB_BIN`.
 Additionally, you can set `VERBOSE` to true (or any non-empty value) to display detailed response and error messages and/or `DEBUG` can be configured to enable debug output.
 
 ```sh
-MNEMONIC="[YOUR MNEMONIC]" TIMEOUT=500 ./test_live_nodes.sh main
+PRIVATE_KEY="[YOUR PRIVATE_KEY]" TIMEOUT=500 ./test_live_nodes.sh main
 ```
 
 ### More Customized method
