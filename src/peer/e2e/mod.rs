@@ -10,12 +10,8 @@ pub const NONCE_KEY_SIZE: usize = 12;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    #[error("invalid bip39 phrase")]
-    InvalidPhrase,
-    #[error("invalid entropy")]
-    InvalidEntropy,
-    #[error("invalid seed")]
-    InvalidSeed,
+    #[error("invalid private key")]
+    InvalidPrivateKey,
     #[error("invalid cipher data")]
     InvalidCipher,
     #[error("k256: {0}")]
@@ -30,8 +26,8 @@ impl FromStr for Pair {
     type Err = Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let secp = Secp256k1::new();
-        let seed = hex::decode(s).map_err(|_| Error::InvalidSeed)?;
-        let kp = KeyPair::from_seckey_slice(&secp, &seed)?;
+        let private_key = hex::decode(s).map_err(|_| Error::InvalidPrivateKey)?;
+        let kp = KeyPair::from_seckey_slice(&secp, &private_key[0..32])?;
 
         Ok(Self(kp))
     }
@@ -118,12 +114,12 @@ mod test {
 
     #[test]
     fn test_shared_key() {
-        let sk1: Pair = "0x95dd1ebb906afb7fcf2688ff380c4f3b634080c58908ee627837912ec4160281"
+        let sk1: Pair = "cb0e16d40820466027bf07b6b9d293820b8b1ada687ef961799be2c7ddd483d6"
             .parse()
             .unwrap();
 
         let sk2: Pair =
-            "winner giant reward damage expose pulse recipe manual brand volcano dry avoid"
+            "cb0e16d40820466027bf07b6b9d293820b8b1ada687ef961799be2c7ddd483d6837bbc28ee9e0e49414489e774aa66fc5b4acc9654ef29e0e55df4b5d5bda54f"
                 .parse()
                 .unwrap();
 

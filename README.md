@@ -161,7 +161,3 @@ While inside the repository
 ```bash
 cargo test
 ```
-
-target/x86_64-unknown-linux-musl/release/rmb-relay --domain relay.gent02.qa.grid.tf --substrate wss://tfchain.dev.grid.tf:443 --debug
-
-target/x86_64-unknown-linux-musl/release/rmb-relay --domain relay.gent02.qa.grid.tf --registrar https://registrar.dev4.grid.tf --debug
