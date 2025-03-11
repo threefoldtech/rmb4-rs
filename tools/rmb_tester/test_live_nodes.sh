@@ -17,10 +17,10 @@ if [ -z "$MNEMONIC" ]; then
 fi
 
 if [[ "$1" == 'main' ]]; then
-  SUBSTRATE_URL='wss://tfchain.grid.tf:443'
+  REGISTRAR_URL='https://registrar.prod4.grid.tf'
   RELAY_URL='wss://relay.grid.tf'
 else
-  SUBSTRATE_URL="wss://tfchain.$1.grid.tf:443"
+  REGISTRAR_URL="https://registrar.prod4.grid.tf"
   RELAY_URL="wss://relay.$1.grid.tf"
 fi
 RMB_LOG_FILE='./rmb-peer.log'
@@ -91,7 +91,7 @@ MNEMONIC="${MNEMONIC#"${MNEMONIC%%[![:space:]]*}"}"; MNEMONIC="${MNEMONIC%"${MNE
 
 # start rmb in background
 debug "rmb-peer starting ($1net).."
-$RMB_BIN -m "$MNEMONIC" --substrate "$SUBSTRATE_URL" --relay "$RELAY_URL" --redis "redis://localhost:6379" --debug &> $RMB_LOG_FILE &
+$RMB_BIN -m "$MNEMONIC" --registrar "$REGISTRAR_URL" --relay "$RELAY_URL" --redis "redis://localhost:6379" --debug &> $RMB_LOG_FILE &
 
 # wait till peer establish connection to a relay
 if ! timeout --preserve-status 20 tail -f -n0 $RMB_LOG_FILE | grep -qe 'now connected'; then

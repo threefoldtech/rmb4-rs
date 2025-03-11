@@ -23,10 +23,10 @@ RMB is developed by ThreefoldTech to create a global network of nodes that are a
 
 Starting from this we came up with a more detailed requirements:
 
-- User (or rather bots) need their identity maintained by `tfchain` (a blockchain) hence each bot needs an account on tfchain to be able to use `rmb`
+- User (or rather bots) need their identity maintained by `registrar` hence each bot needs an account on registrar to be able to use `rmb`
 - Then each message then can be signed by the `bot` keys, hence make it easy to verify the identity of the sender of a message. This is done both ways.
 - To support federation (using 3rd party relays) we needed to add e2e encryption to make sure messages that are surfing the public internet can't be sniffed
-- e2e encryption is done by deriving an encryption key from the same identity seed, and share the public key on `tfchain` hence it's available to everyone to use
+- e2e encryption is done by deriving an encryption key from the same identity seed, and share the public key on `registrar` hence it's available to everyone to use
 
 ## Specification
 
@@ -88,11 +88,13 @@ This allows you to compile Rust programs that can run on Linux systems that do n
   rustup target add x86_64-unknown-linux-musl
   ```
 
+
 - To use this target, you also need to install a linker that supports musl, such as `musl-gcc`.
 
   ```bash
   sudo apt update
   sudo apt install musl-tools
+  sudo apt install build-essential
   ```
 
   You can then pass the `--target=x86_64-unknown-linux-musl` option to `cargo build` or `cargo run` to compile and run your program for this target.
@@ -148,7 +150,7 @@ cargo build --release --target=x86_64-unknown-linux-musl
   **Solution**: The best way to ensure that you’re using the latest release of `protoc` is installing from pre-compiled binaries. See perquisites.
 
 - A peer must use a unique `mnemonic` or keys. It's not correct if multiple peers uses the same mnemonic this will make it impossible to route messages correctly. It's possible for the same peer to make multiple connections to the same `relay` given that it uses different `session ids`. A session id identify the connection and hence make routing messages possible.
-- A single peer on the other hand can make multiple connections to multiple relays for redundancy given that his data on the tfchain must reflect that
+- A single peer on the other hand can make multiple connections to multiple relays for redundancy given that his data on the registrar must reflect that
 
 > RUNNING MULTIPLE PEERS WITH THE SAME MNEMONIC MUST BE AVOIDED UNLESS FOLLOWING THE GUIDE LINES ABOVE
 

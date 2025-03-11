@@ -36,9 +36,7 @@ impl FromStr for Pair {
                 // no prefix, we assume this is a bip39 Mnemonic
                 let mnemonic = Mnemonic::parse_in_normalized(Language::English, s)
                     .map_err(|_| Error::InvalidPhrase)?;
-                let (entropy, entropy_len) = mnemonic.to_entropy_array();
-                let seed = substrate_bip39::seed_from_entropy(&entropy[0..entropy_len], "")
-                    .map_err(|_| Error::InvalidEntropy)?;
+                let seed = mnemonic.to_seed_normalized("");
                 KeyPair::from_seckey_slice(&secp, &seed[..32])?
             }
             Some(h) => {
@@ -54,7 +52,7 @@ impl FromStr for Pair {
 impl Pair {
     /// get public key of the key pair. it's okay to share this public key
     /// with other peers. actually it's the only way to use this for encryption
-    /// is by making your public key accessable for other peers
+    /// is by making your public key accessible for other peers
     pub fn public(&self) -> [u8; PUBLIC_KEY_SIZE] {
         self.0.public_key().serialize()
     }

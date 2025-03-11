@@ -1,13 +1,12 @@
 use super::{validate_signature_len, Identity, Signer, SIGNATURE_LENGTH};
 use anyhow::Result;
 
-use std::convert::From;
-use subxt::ext::sp_core::{
+use sp_core::crypto::{AccountId32, CryptoBytes};
+use sp_core::{
     sr25519::{Pair as SrPair, Public},
     Pair,
 };
-use subxt::utils::AccountId32;
-use tfchain_client::client::KeyPair;
+use std::convert::From;
 
 pub const PREFIX: u8 = 0x73; // ascii s for sr
 
@@ -45,10 +44,6 @@ impl Signer for Sr25519Signer {
 
         sig
     }
-
-    fn pair(&self) -> KeyPair {
-        KeyPair::Sr25519(self.pair.clone())
-    }
 }
 
 impl Identity for Sr25519Signer {
@@ -66,7 +61,6 @@ impl TryFrom<&str> for Sr25519Signer {
 
     fn try_from(s: &str) -> std::result::Result<Self, Self::Error> {
         let pair: SrPair = Pair::from_string(s, None).map_err(|err| anyhow!("{:?}", err))?;
-
         Ok(Self { pair })
     }
 }
@@ -80,7 +74,9 @@ fn verify<P: AsRef<[u8]>, M: AsRef<[u8]>>(pk: &Public, sig: P, message: M) -> Re
         bail!("invalid signature type (expected sr25519)");
     }
 
-    if !SrPair::verify_weak(&sig[1..], message, pk) {
+    let crypto_signature: CryptoBytes<64, _> =
+        sig[1..].try_into().expect("invalid signature length");
+    if !SrPair::verify(&crypto_signature, message, pk) {
         bail!("sr25519 signature verification failed")
     }
 
@@ -91,9 +87,8 @@ fn verify<P: AsRef<[u8]>, M: AsRef<[u8]>>(pk: &Public, sig: P, message: M) -> Re
 mod tests {
     use super::*;
 
-    const WORDS: &str =
-        "volume behind cable present pull exchange wish loyal avocado snap film increase";
-    const SEED: &str = "0xb37231837527c7173dc212bb23a7fe795d5dae540e7c21366a5fb9f4cc398a36";
+    const WORDS: &str = "neck stage box cup core magic produce exercise happy rely vocal then";
+    const SEED: &str = "0xaa4e323bade8609a595108b585c4135855430c411ccf7923f81438cd8a188fce";
 
     #[test]
     fn test_load_from_mnemonics() {

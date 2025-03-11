@@ -4,16 +4,15 @@ use std::str::FromStr;
 use anyhow::{Context, Result};
 use clap::{builder::ArgAction, Args, Parser};
 use rmb::cache::MemCache;
+use rmb::identity::Identity;
 use rmb::identity::KeyType;
-use rmb::identity::{Identity, Signer};
 use rmb::peer::Pair;
 use rmb::peer::{self, storage::RedisStorage};
-use rmb::twin::{RelayDomains, SubstrateTwinDB, TwinDB};
+use rmb::twin::{RegistrarTwinDB, RelayDomains, TwinDB};
 use rmb::{identity, redis};
 
 /// A peer requires only which rely to connect to, and
 /// which identity (mnemonics)
-
 #[derive(Args, Debug)]
 #[group(required = true, multiple = false)]
 struct Secret {
@@ -49,14 +48,9 @@ struct Params {
     #[clap(short, long, default_value_t = String::from("redis://localhost:6379"))]
     redis: String,
 
-    /// substrate addresses please make sure the url also include the port number
-    #[clap(
-        short,
-        long,
-        default_value = "wss://tfchain.grid.tf:443",
-        action=ArgAction::Append,
-    )]
-    substrate: Vec<String>,
+    /// registrar url
+    #[clap(short, long, default_value = "https://registrar.prod4.grid.tf")]
+    registrar: String,
 
     /// set of relay Urls (max 4) please ensure url contain a domain
     #[clap(long, action=ArgAction::Append, default_values = ["wss://relay.grid.tf:443"])]
@@ -66,7 +60,7 @@ struct Params {
     #[clap(short, long, action=ArgAction::Count)]
     debug: u8,
 
-    /// skip twin update on chain if relay is not matching. only used for debugging
+    /// skip twin update on registrar if relay is not matching. only used for debugging
     #[clap(long = "no-update")]
     no_update: bool,
     // enable upload and save uploaded files in the given location
@@ -112,7 +106,6 @@ async fn app(args: Params) -> Result<()> {
         })
         .with_module_level("hyper", log::LevelFilter::Off)
         .with_module_level("ws", log::LevelFilter::Off)
-        .with_module_level("substrate_api_client", log::LevelFilter::Off)
         .with_module_level("mpart_async", log::LevelFilter::Off)
         .with_module_level("jsonrpsee_core", log::LevelFilter::Off)
         .init()?;
@@ -150,9 +143,9 @@ async fn app(args: Params) -> Result<()> {
 
     // cache is a little bit tricky because while it improves performance it
     // makes changes to twin data takes at least 2 min before they are detected
-    let db = SubstrateTwinDB::new(args.substrate, MemCache::default())
+    let db = RegistrarTwinDB::new(args.registrar, MemCache::default())
         .await
-        .context("cannot create substrate twin db object")?;
+        .context("cannot create registrar twin db object")?;
 
     let id = db
         .get_twin_with_account(signer.account())
@@ -168,7 +161,7 @@ async fn app(args: Params) -> Result<()> {
     }
 
     if !args.no_update {
-        // try to check and update the twin info on chain
+        // try to check and update the twin info on registrar
 
         // we need to make sure our twin is up to date
         let twin = db
@@ -178,23 +171,20 @@ async fn app(args: Params) -> Result<()> {
             .ok_or_else(|| anyhow::anyhow!("self twin not found!"))?;
 
         log::debug!("twin relay domain: {:?}", twin.relay);
-        let onchain_relays = twin.relay.unwrap_or_default();
+        let onregistrar_relays = twin.relay.unwrap_or_default();
         let provided_relays = get_domains(&relays_urls);
         // if twin relay or his pk don't match the ones that
-        // should be there, we need to set the value on chain
-        if onchain_relays != provided_relays
+        // should be there, we need to set the value on registrar
+        if onregistrar_relays != provided_relays
             || !matches!(twin.pk, Some(ref pk) if pk == &pair.public())
         {
             // remote relay is not the same as configure one. update is needed
-            log::info!("update twin details on the chain");
+            log::info!("update twin details on the registrar");
 
             let pk = pair.public();
-            let hash = db
-                .update_twin(&signer.pair(), provided_relays, Some(&pk))
+            db.update_twin(&signer, provided_relays, Some(&pk), id)
                 .await
                 .context("failed to update twin information")?;
-
-            log::debug!("hash: {:?}", hash);
         }
     }
 

@@ -65,7 +65,7 @@ ingress:
 
 config:
   RMB_DOMAIN: relay.dev.grid.tf
-  SUBSTRATE_URL: wss://tfchain.dev.grid.tf:443
+  REGISTRAR_URL: https://registrar.dev4.grid.tf
   USER_PER_WORKER: 1000
   WORKERS: 500
 resources:

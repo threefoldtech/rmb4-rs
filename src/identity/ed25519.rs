@@ -1,18 +1,12 @@
 use super::{validate_signature_len, Identity, Signer, SIGNATURE_LENGTH};
 use anyhow::Result;
-// use sp_core::{
-//     crypto::AccountId32,
-//     ed25519::{Pair as EdPair, Public},
-//     Pair,
-// };
 
-use std::convert::From;
-use subxt::ext::sp_core::{
+use sp_core::crypto::{AccountId32, CryptoBytes};
+use sp_core::{
     ed25519::{Pair as EdPair, Public},
     Pair,
 };
-use subxt::utils::AccountId32;
-use tfchain_client::client::KeyPair;
+use std::convert::From;
 
 pub const PREFIX: u8 = 0x65; // ascii e for ed
 
@@ -50,10 +44,6 @@ impl Signer for Ed25519Signer {
 
         sig
     }
-
-    fn pair(&self) -> KeyPair {
-        KeyPair::Ed25519(self.pair)
-    }
 }
 
 impl Identity for Ed25519Signer {
@@ -70,7 +60,6 @@ impl TryFrom<&str> for Ed25519Signer {
     type Error = anyhow::Error;
     fn try_from(s: &str) -> std::result::Result<Self, Self::Error> {
         let pair: EdPair = Pair::from_string(s, None).map_err(|err| anyhow!("{:?}", err))?;
-
         Ok(Self { pair })
     }
 }
@@ -84,7 +73,9 @@ fn verify<P: AsRef<[u8]>, M: AsRef<[u8]>>(pk: &Public, sig: P, message: M) -> Re
         bail!("invalid signature type (expected ed25519)");
     }
 
-    if !EdPair::verify_weak(&sig[1..], message, pk) {
+    let crypto_signature: CryptoBytes<64, _> =
+        sig[1..].try_into().expect("invalid signature length");
+    if !EdPair::verify(&crypto_signature, message, pk) {
         bail!("ed25519 signature verification failed")
     }
 
