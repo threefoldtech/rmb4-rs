@@ -1,4 +1,5 @@
 use aes_gcm::{aead::Aead, Aes256Gcm, KeyInit, Nonce};
+use bip39::{Language, Mnemonic};
 use rand_core::{OsRng, RngCore};
 use secp256k1::constants;
 use secp256k1::{KeyPair, PublicKey, Secp256k1};
@@ -10,8 +11,12 @@ pub const NONCE_KEY_SIZE: usize = 12;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
-    #[error("invalid private key")]
-    InvalidPrivateKey,
+    #[error("invalid bip39 phrase")]
+    InvalidPhrase,
+    #[error("invalid entropy")]
+    InvalidEntropy,
+    #[error("invalid seed")]
+    InvalidSeed,
     #[error("invalid cipher data")]
     InvalidCipher,
     #[error("k256: {0}")]
@@ -26,8 +31,19 @@ impl FromStr for Pair {
     type Err = Error;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let secp = Secp256k1::new();
-        let private_key = hex::decode(s).map_err(|_| Error::InvalidPrivateKey)?;
-        let kp = KeyPair::from_seckey_slice(&secp, &private_key[0..32])?;
+        let kp: KeyPair = match s.strip_prefix("0x") {
+            None => {
+                // no prefix, we assume this is a bip39 Mnemonic
+                let mnemonic = Mnemonic::parse_in_normalized(Language::English, s)
+                    .map_err(|_| Error::InvalidPhrase)?;
+                let seed = mnemonic.to_seed_normalized("");
+                KeyPair::from_seckey_slice(&secp, &seed[..32])?
+            }
+            Some(h) => {
+                let seed = hex::decode(h).map_err(|_| Error::InvalidSeed)?;
+                KeyPair::from_seckey_slice(&secp, &seed)?
+            }
+        };
 
         Ok(Self(kp))
     }
@@ -114,19 +130,17 @@ mod test {
 
     #[test]
     fn test_shared_key() {
-        let sk1: Pair = "cb0e16d40820466027bf07b6b9d293820b8b1ada687ef961799be2c7ddd483d6"
+        let sk1: Pair = "0x340f7341b312bcc61aeea7a76d759d809b8601cbc6d22cb2817278e346137a5d"
             .parse()
             .unwrap();
 
         let sk2: Pair =
-            "cb0e16d40820466027bf07b6b9d293820b8b1ada687ef961799be2c7ddd483d6837bbc28ee9e0e49414489e774aa66fc5b4acc9654ef29e0e55df4b5d5bda54f"
+            "tackle blouse grain dawn adult loyal tattoo price access tilt chimney silk"
                 .parse()
                 .unwrap();
 
         let shared1 = sk1.shared(&sk2.public()).unwrap();
         let shared2 = sk2.shared(&sk1.public()).unwrap();
-        println!("{:?}", sk1.public());
-        println!("{:?}", sk2.public());
 
         assert_eq!(shared1, shared2);
 

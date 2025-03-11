@@ -9,10 +9,10 @@ case $1 in
   exit 1
 esac
 
-if [ -z "$PRIVATE_KEY" ]; then
-  echo 'PRIVATE_KEY is not set'
-  echo 'Please set the PRIVATE_KEY environment variable'
-  echo 'Example: PRIVATE_KEY="..." ./test_live_nodes.sh <NETWORK-ALIAS>'
+if [ -z "$MNEMONIC" ]; then
+  echo 'MNEMONIC is not set'
+  echo 'Please set the MNEMONIC environment variable'
+  echo 'Example: MNEMONIC="..." ./test_live_nodes.sh <NETWORK-ALIAS>'
   exit 1
 fi
 
@@ -86,12 +86,12 @@ if pgrep -x $(basename "$RMB_BIN") > /dev/null; then
     pkill -x $(basename "$RMB_BIN")
 fi
 
-# ensure the PRIVATE_KEY has no leading or trailing spaces
-PRIVATE_KEY="${PRIVATE_KEY#"${PRIVATE_KEY%%[![:space:]]*}"}"; PRIVATE_KEY="${PRIVATE_KEY%"${PRIVATE_KEY##*[![:space:]]}"}"
+# ensure the MNEMONIC has no leading or trailing spaces
+MNEMONIC="${MNEMONIC#"${MNEMONIC%%[![:space:]]*}"}"; MNEMONIC="${MNEMONIC%"${MNEMONIC##*[![:space:]]}"}"
 
 # start rmb in background
 debug "rmb-peer starting ($1net).."
-$RMB_BIN --secret "$PRIVATE_KEY" --registrar "$REGISTRAR_URL" --relay "$RELAY_URL" --redis "redis://localhost:6379" --debug &> $RMB_LOG_FILE &
+$RMB_BIN -m "$MNEMONIC" --registrar "$REGISTRAR_URL" --relay "$RELAY_URL" --redis "redis://localhost:6379" --debug &> $RMB_LOG_FILE &
 
 # wait till peer establish connection to a relay
 if ! timeout --preserve-status 20 tail -f -n0 $RMB_LOG_FILE | grep -qe 'now connected'; then

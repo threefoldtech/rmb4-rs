@@ -120,7 +120,7 @@ impl ClientWrapper {
         twin_id: u32,
     ) -> Result<(), Error> {
         let mut update_data = json!({
-            "relays": vec![relay.clone()],
+            "relays": vec![relay.clone()], // TODO:
             // "rmb_enc_key": ""
         });
 
@@ -323,15 +323,15 @@ mod tests {
             .context("cannot create registrar twin db object")
             .unwrap();
 
-        let secret = "cb0e16d40820466027bf07b6b9d293820b8b1ada687ef961799be2c7ddd483d6837bbc28ee9e0e49414489e774aa66fc5b4acc9654ef29e0e55df4b5d5bda54f";
+        let secret = "steak curious nut bean aim range medal spare segment decide tide drink";
         let sk = identity::Ed25519Signer::try_from(secret).unwrap();
         let kp = identity::Signers::Ed25519(sk);
-        let pk = decode("g3u8KO6eDklBRInndKpm/FtKzJZU7yng5V30tdW9pU8=").unwrap();
+        let pk = decode("1KyV6O2jvB++VT6ZG+qyAeCayq/vafR0pGnrmaTA4CU=").unwrap();
 
         let mut relays = Vec::new();
         relays.push("relay.gent02.dev.grid.tf".to_string());
 
-        db.update_twin(&kp, RelayDomains::new(&relays), Some(&pk), 15)
+        db.update_twin(&kp, RelayDomains::new(&relays), Some(&pk), 85)
             .await
             .context("can't update twin from registrar")
             .unwrap();

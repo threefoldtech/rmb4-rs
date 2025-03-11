@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use std::str::FromStr;
 
 use anyhow::{Context, Result};
-use clap::{builder::ArgAction, Parser};
+use clap::{builder::ArgAction, Args, Parser};
 use rmb::cache::MemCache;
 use rmb::identity::Identity;
 use rmb::identity::KeyType;
@@ -10,6 +10,24 @@ use rmb::peer::Pair;
 use rmb::peer::{self, storage::RedisStorage};
 use rmb::twin::{RegistrarTwinDB, RelayDomains, TwinDB};
 use rmb::{identity, redis};
+
+/// A peer requires only which rely to connect to, and
+/// which identity (mnemonics)
+#[derive(Args, Debug)]
+#[group(required = true, multiple = false)]
+struct Secret {
+    /// mnemonic, as words, or hex seed if prefixed with 0x
+    #[clap(short, long)]
+    mnemonic: Option<String>,
+
+    /// [deprecated] please use `mnemonic` instead
+    #[clap(long)]
+    mnemonics: Option<String>,
+
+    /// [deprecated] please use `mnemonic` instead
+    #[clap(long)]
+    seed: Option<String>,
+}
 
 /// the reliable message bus
 #[derive(Parser, Debug)]
@@ -19,9 +37,8 @@ struct Params {
     #[clap(short, long, default_value_t = KeyType::Sr25519)]
     key_type: KeyType,
 
-    /// private key as hex
-    #[clap(short, long)]
-    secret: Option<String>,
+    #[command(flatten)]
+    secret: Secret,
 
     /// wither to accept uploads or not
     #[clap(short, long)]
@@ -94,9 +111,15 @@ async fn app(args: Params) -> Result<()> {
         .init()?;
 
     let secret = &args.secret;
-    let secret: &str = match secret.as_deref() {
-        Some(s) => s,
-        None => anyhow::bail!("secret is required"),
+    let secret: &str = match secret.mnemonic.as_deref() {
+        Some(m) => m,
+        None => match secret.mnemonics.as_deref() {
+            Some(m) => m,
+            None => match secret.seed.as_deref() {
+                Some(m) => m,
+                None => anyhow::bail!("mnemonic is required"),
+            },
+        },
     };
 
     let pair = Pair::from_str(secret).context("failed to initialize encryption key")?;
@@ -104,12 +127,12 @@ async fn app(args: Params) -> Result<()> {
     let signer = match args.key_type {
         KeyType::Ed25519 => {
             let sk = identity::Ed25519Signer::try_from(secret)
-                .context("failed to load ed25519 key from private key")?;
+                .context("failed to load ed25519 key from mnemonics or seed")?;
             identity::Signers::Ed25519(sk)
         }
         KeyType::Sr25519 => {
             let sk = identity::Sr25519Signer::try_from(secret)
-                .context("failed to load sr25519 key from private key")?;
+                .context("failed to load sr25519 key from mnemonics or seed")?;
             identity::Signers::Sr25519(sk)
         }
     };

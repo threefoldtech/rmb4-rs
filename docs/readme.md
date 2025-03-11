@@ -219,7 +219,7 @@ not fully trust the relay or whoever is hosting it. Hence e2e was needed
 
 As you already understand e2e is completely up to the peers to implement, and even other implementations of the peers can agree on a completely different encryption algorithm and key sharing algorithm (again, relay does not care). But in our implementation of the e2e (rmb-peer) things goes like this
 
-- Each twin has a `public_key` field on registrar. when rmb-peer start, it generates an `secp256k1` key from the same private key as the user registrar private key. Note that this will not make the encryption key and the signing key any related, they just are driven from the same private key.
+- Each twin has a `public_key` field on registrar. when rmb-peer start, it generates an `secp256k1` key from the same seed as the user registrar mnemonic. Note that this will not make the encryption key and the signing key any related, they just are driven from the same seed.
 - On start, if the key is not already set on the twin object, the key is updated.
 - If a peer A is trying to send a message to peer B. but peer B does not has his `pk` set, peer A will send the message in plain-text format (please check the protobuf envelope type for details)
 - If peer B has public key set, peer A will prefer e2e encryption and will does the following:
@@ -265,5 +265,5 @@ Enabling failover ensures that communication between twins can continue even if 
 Example:
 
 ```bash
-  rmb-peer --secret "{PRIVATE_KEY}" --registrar https://registrar.prod4.grid.tf --relay wss://r1.dev.grid.tf --relay wss://r2.dev.grid.tf
+  rmb-peer -m "{MNEMONIC}" --registrar https://registrar.prod4.grid.tf --relay wss://r1.dev.grid.tf --relay wss://r2.dev.grid.tf
 ```

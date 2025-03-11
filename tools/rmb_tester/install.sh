@@ -10,5 +10,5 @@ deactivate
 echo ">> install complete!"
 echo ">> to activate the virtual environment use 'source venv/bin/activate'"
 echo ">> or use ./test-live-nodes.sh script"
-echo ">> example: PRIVATE_KEY=[PRIVATE_KEY] ./test-live-nodes.sh [dev,qa,test,main]"
-echo ">> example: PRIVATE_KEY=[PRIVATE_KEY] TIMEOUT=[SECONDS] RMB_BIN=[BINARY-PATH] ./test-live-nodes.sh [dev,qa,test,main]"
+echo ">> example: MNEMONIC=[MNEMONIC] ./test-live-nodes.sh [dev,qa,test,main]"
+echo ">> example: MNEMONIC=[MNEMONIC] TIMEOUT=[SECONDS] RMB_BIN=[BINARY-PATH] ./test-live-nodes.sh [dev,qa,test,main]"

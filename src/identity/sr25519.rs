@@ -1,7 +1,6 @@
 use super::{validate_signature_len, Identity, Signer, SIGNATURE_LENGTH};
 use anyhow::Result;
 
-use hex::decode;
 use sp_core::crypto::{AccountId32, CryptoBytes};
 use sp_core::{
     sr25519::{Pair as SrPair, Public},
@@ -60,16 +59,8 @@ impl Identity for Sr25519Signer {
 impl TryFrom<&str> for Sr25519Signer {
     type Error = anyhow::Error;
 
-    fn try_from(private_key_hex: &str) -> std::result::Result<Self, Self::Error> {
-        let private_key_bytes = decode(private_key_hex)?;
-        let private_key_array: [u8; 64] = private_key_bytes
-            .try_into()
-            .expect("Failed to convert to fixed-size array");
-
-        // Extract the first 32 bytes as the secret key
-        let secret_key = &private_key_array[0..32];
-
-        let pair: SrPair = SrPair::from_seed_slice(secret_key)?;
+    fn try_from(s: &str) -> std::result::Result<Self, Self::Error> {
+        let pair: SrPair = Pair::from_string(s, None).map_err(|err| anyhow!("{:?}", err))?;
         Ok(Self { pair })
     }
 }
@@ -96,13 +87,22 @@ fn verify<P: AsRef<[u8]>, M: AsRef<[u8]>>(pk: &Public, sig: P, message: M) -> Re
 mod tests {
     use super::*;
 
-    const PRIVATE_KEY: &str = "56ad3b7b0925fbb9b6d43f8db2a9b199b28c4c8cfdbbf8ecbfb5f20dfd09009e15f85563edc6e9b456b31e7d7cf720c7d3d897cc54ef61c28f3a0d52de9296b1";
+    const WORDS: &str = "neck stage box cup core magic produce exercise happy rely vocal then";
+    const SEED: &str = "0xaa4e323bade8609a595108b585c4135855430c411ccf7923f81438cd8a188fce";
 
     #[test]
-    fn test_load_from_private_key() {
-        Sr25519Signer::try_from(PRIVATE_KEY).expect("key must be loaded");
+    fn test_load_from_mnemonics() {
+        Sr25519Signer::try_from(WORDS).expect("key must be loaded");
 
-        let err = Sr25519Signer::try_from("invalid");
+        let err = Sr25519Signer::try_from("invalid words");
+        assert_eq!(err.is_err(), true);
+    }
+
+    #[test]
+    fn test_load_from_seed() {
+        Sr25519Signer::try_from(SEED).expect("key must be loaded");
+
+        let err = Sr25519Signer::try_from("0xinvalidseed");
         assert_eq!(err.is_err(), true);
     }
 }

@@ -119,7 +119,7 @@ mod test {
 
     #[test]
     fn create_token_sr() {
-        let signer = Sr25519Signer::try_from("cb0e16d40820466027bf07b6b9d293820b8b1ada687ef961799be2c7ddd483d6837bbc28ee9e0e49414489e774aa66fc5b4acc9654ef29e0e55df4b5d5bda54f").unwrap();
+        let signer = Sr25519Signer::try_from("//Alice").unwrap();
         //let identity = signer.account();
 
         let token = super::token(&signer, 100, None, 20).unwrap();
@@ -132,7 +132,7 @@ mod test {
 
     #[test]
     fn create_token_ed() {
-        let signer = Ed25519Signer::try_from("cb0e16d40820466027bf07b6b9d293820b8b1ada687ef961799be2c7ddd483d6837bbc28ee9e0e49414489e774aa66fc5b4acc9654ef29e0e55df4b5d5bda54f").unwrap();
+        let signer = Ed25519Signer::try_from("//Alice").unwrap();
         //let identity = signer.account();
 
         let token = super::token(&signer, 100, None, 20).unwrap();
